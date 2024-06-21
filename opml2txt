@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import xml.etree.ElementTree as ET
+import sys
+
+def process_outline(outline, parent_text=""):
+    """
+    Recursively process an outline element and its children.
+
+    :param outline: The outline element to process
+    :param parent_text: The text of the parent element (for building the full path)
+    :return: A list of formatted strings representing the outline and its children
+    """
+    # Get the text and description attributes of the current outline
+    current_text = outline.get('text')
+    description = outline.get('Description', '')
+
+    # Build the full text path, including parent text if it exists
+    if parent_text:
+        full_text = f"{parent_text}.{current_text}"
+    else:
+        full_text = current_text
+
+    # Create the formatted string for this outline
+    result = [f".{full_text}: {description}"]
+
+    # Recursively process all child 'outline' elements
+    for child in outline.findall('outline'):
+        result.extend(process_outline(child, full_text))
+
+    return result
+
+def opml_to_text():
+    """
+    Read OPML from stdin, convert it to the specified text format, and write to stdout.
+    """
+    # Read the entire input from stdin
+    opml_content = sys.stdin.read()
+
+    # Parse the OPML content
+    root = ET.fromstring(opml_content)
+
+    # Find the 'body' element
+    body = root.find('body')
+
+    # Process all top-level 'outline' elements in the body
+    lines = []
+    for outline in body.findall('outline'):
+        lines.extend(process_outline(outline))
+
+    # Write the result to stdout
+    sys.stdout.write('\n'.join(lines))
+
+if __name__ == "__main__":
+    opml_to_text()
