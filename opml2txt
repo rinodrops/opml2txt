@@ -3,12 +3,13 @@
 import xml.etree.ElementTree as ET
 import sys
 
-def process_outline(outline, parent_text=""):
+def process_outline(outline, parent_text="", level=0):
     """
     Recursively process an outline element and its children.
 
     :param outline: The outline element to process
     :param parent_text: The text of the parent element (for building the full path)
+    :param level: The current indentation level
     :return: A list of formatted strings representing the outline and its children
     """
     # Get the text and description attributes of the current outline
@@ -21,12 +22,13 @@ def process_outline(outline, parent_text=""):
     else:
         full_text = current_text
 
-    # Create the formatted string for this outline
-    result = [f".{full_text}: {description}"]
+    # Create the formatted string for this outline with indentation
+    indent = "  " * level
+    result = [f"{indent}.{full_text}: {description}"]
 
     # Recursively process all child 'outline' elements
     for child in outline.findall('outline'):
-        result.extend(process_outline(child, full_text))
+        result.extend(process_outline(child, full_text, level + 1))
 
     return result
 
@@ -47,6 +49,11 @@ def opml_to_text():
     lines = []
     for outline in body.findall('outline'):
         lines.extend(process_outline(outline))
+        lines.append("")  # Add an empty line after each top-level node
+
+    # Remove the last empty line if it exists
+    if lines and lines[-1] == "":
+        lines.pop()
 
     # Write the result to stdout
     sys.stdout.write('\n'.join(lines))
